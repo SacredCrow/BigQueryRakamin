@@ -35,12 +35,12 @@ END
   AS nett_profit,
   t0.rating AS rating_transaksi
 FROM
-  `kf_final_transaction.kf_final_transaction` AS t0
+  `kimia_farma.kf_final_transaction` AS t0
 INNER JOIN
-  `kf_kantor_cabang.kf_kantor_cabang` AS t1
+  `kimia_farma.kf_kantor_cabang` AS t1
 ON
   t0.branch_id = t1.branch_id
 INNER JOIN
-  `kf_product.kf_product` AS t2
+  `kimia_farma.kf_product` AS t2
 ON
   t0.product_id = t2.product_id
