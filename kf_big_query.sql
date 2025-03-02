@@ -1,3 +1,24 @@
+CREATE TABLE kimia_farma.kf_analisa_kimia_farma AS
+
+WITH kf_final_transaction_laba AS
+(
+  SELECT *,
+    CASE
+      WHEN nett_sales <= 50000 THEN 0.1
+      WHEN nett_sales > 50000 AND nett_sales <= 100000 THEN 0.15
+      WHEN nett_sales > 100000 AND nett_sales <= 300000 THEN 0.2
+      WHEN nett_sales > 300000 AND nett_sales <= 500000 THEN 0.25
+      ELSE 0.3
+    END AS persentase_gross_laba
+  FROM
+  (
+    SELECT *,
+      CAST(ROUND(price * (1 - discount_percentage/100)) AS INT64) AS nett_sales
+    FROM
+      `kimia_farma.kf_final_transaction`
+  )
+)
+
 SELECT
   t0.transaction_id,
   t0.date,
@@ -11,36 +32,19 @@ SELECT
   t2.product_name,
   t2.price AS actual_price,
   t0.discount_percentage,
-  CASE
-    WHEN t2.price <= 50000 THEN 0.1
-    WHEN t2.price > 50000
-  AND t2.price <= 100000 THEN 0.15
-    WHEN t2.price > 100000 AND t2.price <= 300000 THEN 0.2
-    WHEN t2.price > 300000
-  AND t2.price <= 500000 THEN 0.25
-    ELSE 0.3
-END
-  AS persentase_gross_laba,
-  t2.price * t0.discount_percentage AS nett_sales,
-  t2.price * t0.discount_percentage *
-  CASE
-    WHEN t2.price <= 50000 THEN 0.1
-    WHEN t2.price > 50000
-  AND t2.price <= 100000 THEN 0.15
-    WHEN t2.price > 100000 AND t2.price <= 300000 THEN 0.2
-    WHEN t2.price > 300000
-  AND t2.price <= 500000 THEN 0.25
-    ELSE 0.3
-END
-  AS nett_profit,
-  t0.rating AS rating_transaksi
+  t0.persentase_gross_laba,
+  t0.nett_sales,
+  CAST(ROUND(t0.nett_sales * t0.persentase_gross_laba) AS INT64) AS nett_profit,
+  t0.rating AS rating_transaksi,
 FROM
-  `kimia_farma.kf_final_transaction` AS t0
-INNER JOIN
+  kf_final_transaction_laba AS t0
+LEFT JOIN
   `kimia_farma.kf_kantor_cabang` AS t1
 ON
   t0.branch_id = t1.branch_id
-INNER JOIN
+LEFT JOIN
   `kimia_farma.kf_product` AS t2
 ON
   t0.product_id = t2.product_id
+ORDER BY
+  t0.date ASC
